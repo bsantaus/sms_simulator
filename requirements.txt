@@ -1,4 +1,5 @@
 fastapi
-sqlmodel
 httpx
 pika
+pytest
+sqlmodel
