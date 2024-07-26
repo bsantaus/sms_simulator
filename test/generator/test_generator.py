@@ -83,7 +83,7 @@ def test_start_generating(default_gen):
 
     assert generate_10.push_message.call_count == 10
 
-    generate_10.push_message.call_count = 0
+    generate_10.push_message.reset_mock()
     generate_10.num_messages = 100
 
     generate_10.start_generating()

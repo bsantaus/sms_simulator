@@ -6,28 +6,51 @@ from common.message import Message
 
 def _check_range(val, min, max):
     return val >= min and val <= max
+class Sender():
 
-def _validate_inputs(msg, mean_delay, fail_rate):
-    if not _check_range(len(msg.message), 1, 100):
-        raise ValueError("Message length must be in range [0,100])!")
+    def __init__(
+        self,
+        mean_delay: Optional[float] = 1,
+        fail_rate: Optional[float] = 0.1
+    ):
+        self._validate_config(mean_delay, fail_rate)
+        self.mean_delay = mean_delay
+        self.fail_rate = fail_rate
+        self.finish_consuming = False
+
+    def _validate_config(self, mean_delay: float, fail_rate: float):
+
+        if mean_delay < 0:
+            raise ValueError("Mean delay must be >= 0!")
+        
+        if not _check_range(fail_rate, 0, 1):
+            raise ValueError("Fail Rate must be in range [0,1]")
+        
+    def _validate_message(self, msg: Message):
+        if not _check_range(len(msg.message), 1, 100):
+            raise ValueError("Message length must be in range [0,100])!")
+        
+        if not len(msg.phone) == 10:
+            raise ValueError("Phone number must contain 10 digits!")
+
+    def send_message(
+        self,
+        msg: Message
+    ):
+        self._validate_message(msg)
+        
+        delay = random.uniform(0, 2 * self.mean_delay)
+        time.sleep(delay)
+
+        return not (random.random() <= self.fail_rate)
     
-    if not len(msg.phone) == 10:
-        raise ValueError("Phone number must contain 10 digits!")
-
-    if mean_delay < 0:
-        raise ValueError("Mean delay must be >= 0!")
+    def pull_message(self):
+        pass
     
-    if not _check_range(fail_rate, 0, 1):
-        raise ValueError("Fail Rate must be in range [0,1]")
+    def report_result(self, result):
+        pass
 
-def send_message(
-    msg: Message,
-    mean_delay: Optional[float] = 1,
-    fail_rate: Optional[float] = 0.1
-):
-    _validate_inputs(msg, mean_delay, fail_rate)
-    
-    delay = random.uniform(0, 2 * mean_delay)
-    time.sleep(delay)
-
-    return not (random.random() <= fail_rate)
+    def consume_messages(self):
+        while not self.finish_consuming:
+            result = self.send_message(self.pull_message())
+            self.report_result(result)
