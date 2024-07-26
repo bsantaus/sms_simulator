@@ -1,8 +1,8 @@
 import pytest
 from unittest.mock import MagicMock
 
-from generator.generator import Generator, Message
-
+from generator.generator import Generator
+from msg_queue.msg_queue import Message
 
 MAX_STRING_LEN = 100
 MIN_STRING_LEN = 1
@@ -15,14 +15,14 @@ def default_gen():
 def test_constructor(default_gen):
     assert default_gen.num_messages == 1000
 
-    gen_5 = Generator(5)
+    gen_5 = Generator(num_messages=5)
     assert gen_5.num_messages == 5
 
-    gen_0 = Generator(0)
+    gen_0 = Generator(num_messages=0)
     assert gen_0.num_messages == 0
 
     with pytest.raises(ValueError):
-        gen_minus_one = Generator(-1)       
+        gen_minus_one = Generator(num_messages=-1)       
 
 def test_create_random_string(default_gen):
     rand_string = default_gen.create_random_string()
@@ -34,7 +34,6 @@ def test_create_random_string(default_gen):
     assert len(rand_string) >= MIN_STRING_LEN and len(rand_string) <= MAX_STRING_LEN
 
     assert rand_string != rand_string_1
-    assert len(rand_string) != len(rand_string_1)
 
     # check sequence of characters being generated is not the same even if lengths are different
     assert rand_string[:len(rand_string_1)] != rand_string_1[:len(rand_string)]
@@ -76,7 +75,7 @@ def test_start_generating(default_gen):
     assert default_gen.push_message.call_count == default_gen.num_messages
     assert type(default_gen.push_message.call_args[0][0]) == Message
 
-    generate_10 = Generator(10)
+    generate_10 = Generator(num_messages=10)
 
     generate_10.push_message = MagicMock()
     generate_10.start_generating()
@@ -89,7 +88,7 @@ def test_start_generating(default_gen):
     generate_10.start_generating()
     assert generate_10.push_message.call_count == 100
 
-    generate_0 = Generator(0)
+    generate_0 = Generator(num_messages=0)
 
     generate_0.push_message = MagicMock()
 

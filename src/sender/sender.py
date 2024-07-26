@@ -2,14 +2,15 @@ import random
 import time
 from typing import Optional
 
-from common.message import Message
+from msg_queue.msg_queue import Message, MessageQueue
 
-def _check_range(val, min, max):
+def _check_range(val, min, max) -> bool:
     return val >= min and val <= max
 class Sender():
 
     def __init__(
         self,
+        queue: Optional[MessageQueue] = None,
         mean_delay: Optional[float] = 1,
         fail_rate: Optional[float] = 0.1
     ):
@@ -17,6 +18,7 @@ class Sender():
         self.mean_delay = mean_delay
         self.fail_rate = fail_rate
         self.finish_consuming = False
+        self.queue = queue
 
     def _validate_config(self, mean_delay: float, fail_rate: float):
 
@@ -36,7 +38,7 @@ class Sender():
     def send_message(
         self,
         msg: Message
-    ):
+    ) -> bool:
         self._validate_message(msg)
         
         delay = random.uniform(0, 2 * self.mean_delay)
@@ -44,8 +46,11 @@ class Sender():
 
         return not (random.random() <= self.fail_rate)
     
-    def pull_message(self):
-        pass
+    def pull_message(self) -> Message | None:
+        if self.queue:
+            return self.queue.pull()
+        else:
+            print("No Message Queue Available!")
     
     def report_result(self, result):
         pass

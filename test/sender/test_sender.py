@@ -5,7 +5,7 @@ import time
 import threading
 
 from sender.sender import Sender
-from common.message import Message
+from msg_queue.msg_queue import Message
 
 
 @pytest.fixture
