@@ -1,16 +1,11 @@
 import random
 import string
 
-from dataclasses import dataclass
+from common.message import Message
 
 MAX_STRING_LEN = 100
 MIN_STRING_LEN = 1
 PHONE_LEN = 10
-
-@dataclass
-class Message():
-    message: str
-    phone: str
 
 class Generator():
 
