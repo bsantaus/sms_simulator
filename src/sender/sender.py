@@ -43,8 +43,9 @@ class Sender():
         
         delay = random.uniform(0, 2 * self.mean_delay)
         time.sleep(delay)
+        result = not (random.random() <= self.fail_rate)
 
-        return not (random.random() <= self.fail_rate)
+        return result, delay
     
     def pull_message(self) -> Message | None:
         if self.queue:
@@ -52,10 +53,10 @@ class Sender():
         else:
             print("No Message Queue Available!")
     
-    def report_result(self, result):
+    def report_result(self, result: bool, delay: float):
         pass
 
     def consume_messages(self):
         while not self.finish_consuming:
-            result = self.send_message(self.pull_message())
-            self.report_result(result)
+            result, delay = self.send_message(self.pull_message())
+            self.report_result(result, delay)

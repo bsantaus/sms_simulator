@@ -2,7 +2,8 @@ install:
 	pip install -r requirements.txt
 	cd src/monitor/frontend && npm install && cd ../../..
 
-test: test-sender test-generator test-backend test-queue
+test-all: 
+	PYTHONPATH=src/:${PYTHONPATH} pytest test
 
 test-sender:
 	PYTHONPATH=src/:${PYTHONPATH} pytest test/sender/

@@ -31,13 +31,14 @@ def test_send_message_instant():
 
     start = time.time()
 
-    result = sdr.send_message(
+    success, delay = sdr.send_message(
         msg=Message(message="not random", phone="5555555555"),
     )
 
     assert round(time.time() - start) == 0
-    assert type(result) == bool
-    assert result == True
+    assert type(success) == bool
+    assert success == True
+    assert delay == 0
 
 
 def test_send_message_delays():
@@ -61,9 +62,10 @@ def test_send_message_results():
         sdr = Sender(mean_delay=0, fail_rate=rate)
 
         for _ in range(100):
-            successes = successes + 1 if sdr.send_message(
+            success, _ = sdr.send_message(
                 msg=Message(message="not random", phone="5555555555")
-            ) else successes
+            )
+            successes += 1 if success else 0
 
         assert successes >= low_bound
         assert successes <= high_bound
