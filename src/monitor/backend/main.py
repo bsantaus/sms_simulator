@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.responses import JSONResponse
 import time
 from threading import Lock
 
@@ -17,6 +18,15 @@ message_statistics = MessageStatistics(
     success_messages=0,
     average_delay=0.0
 )
+
+@app.get("/")
+def server_check():
+    return JSONResponse(
+        content={
+            "timestamp": time.time(),
+            "message": "OK"
+        }
+    )
 
 @app.post("/message", response_model=None, responses={"400": {"model": ErrorResponse}})
 def report_message_result(message_result: MessageResultRequest):

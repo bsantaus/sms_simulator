@@ -1,24 +1,55 @@
 import random
 import time
+import httpx
+import json
 from typing import Optional
 
 from msg_queue.msg_queue import Message, MessageQueue
 
 def _check_range(val, min, max) -> bool:
     return val >= min and val <= max
+
+class MonitorService():
+
+    def __init__(
+            self,
+            url: str = None
+    ):
+        if url:
+            chk = httpx.get(url)
+            if not chk.status_code == 200:
+                raise Exception("Monitor API provided is not available!")
+
+        self.url = url
+    
+    def report_message(self, message: Message, result: bool, delay: float):
+        if self.url:
+            res = httpx.post(self.url + "/message", json={
+                "message": message.message,
+                "phone": message.phone,
+                "success": result,
+                "delay": delay
+            })
+
+            if res.status_code != 200:
+                raise Exception(f"Error reporting to Monitor API: {json.loads(res.content)}")
+
 class Sender():
 
     def __init__(
         self,
         queue: Optional[MessageQueue] = None,
         mean_delay: Optional[float] = 1,
-        fail_rate: Optional[float] = 0.1
+        fail_rate: Optional[float] = 0.1,
+        monitor_url: Optional[str] = None,
     ):
         self._validate_config(mean_delay, fail_rate)
         self.mean_delay = mean_delay
         self.fail_rate = fail_rate
         self.finish_consuming = False
         self.queue = queue
+
+        self.monitor = MonitorService(monitor_url)
 
     def _validate_config(self, mean_delay: float, fail_rate: float):
 
@@ -53,10 +84,15 @@ class Sender():
         else:
             print("No Message Queue Available!")
     
-    def report_result(self, result: bool, delay: float):
-        pass
+    def report_result(self, message: Message, result: bool, delay: float):
+        self.monitor.report_message(message, result, delay)
 
     def consume_messages(self):
         while not self.finish_consuming:
-            result, delay = self.send_message(self.pull_message())
-            self.report_result(result, delay)
+            message = self.pull_message()
+
+            if message:
+                result, delay = self.send_message(message)
+                self.report_result(message, result, delay)
+            else:
+                time.sleep(self.mean_delay)
