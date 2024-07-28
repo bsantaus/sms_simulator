@@ -16,12 +16,20 @@ class MonitorService():
             url: str = None
     ):
         if url:
-            chk = httpx.get(url)
-            if not chk.status_code == 200:
-                raise Exception("Monitor API provided is not available!")
+            attempts = 3
+            while attempts > 0:
+                attempts -= 1
+                try:
+                    chk = httpx.get(url)
+                    if chk.status_code == 200:
+                        self.url = url
+                        return
+                except Exception as e:
+                    time.sleep(2)
+            raise Exception("Monitor API not available!")
+        else:
+            self.url = None    
 
-        self.url = url
-    
     def report_message(self, message: Message, result: bool, delay: float):
         if self.url:
             res = httpx.post(self.url + "/message", json={

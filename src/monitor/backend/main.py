@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 import time
+import os
 from threading import Lock
 
 from .models import *
@@ -27,6 +28,12 @@ def server_check():
             "message": "OK"
         }
     )
+
+@app.get("/interval")
+def get_interval():
+    return {
+        "delay": float(os.getenv("SMS_UPDATE_INTERVAL", 1))
+    }
 
 @app.post("/message", response_model=None, responses={"400": {"model": ErrorResponse}})
 def report_message_result(message_result: MessageResultRequest):
