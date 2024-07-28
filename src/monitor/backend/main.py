@@ -32,7 +32,7 @@ def server_check():
 @app.get("/interval")
 def get_interval():
     return {
-        "delay": float(os.getenv("SMS_UPDATE_INTERVAL", 1))
+        "interval": float(os.getenv("SMS_UPDATE_INTERVAL", 1))
     }
 
 @app.post("/message", response_model=None, responses={"400": {"model": ErrorResponse}})

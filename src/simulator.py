@@ -27,7 +27,6 @@ class SenderSettings:
     mean_delay: Optional[float] = 0.5
     fail_rate: Optional[float] = 0.5
 
-
 @dataclass
 class SimulatorConfig:
     num_messages: Optional[int] = 1000
@@ -57,7 +56,7 @@ def print_help_message(code: Optional[int] = 0):
     print("\t                                 Senders which are not explicitly provided configuration values will use default")
     print("\t                                 values of 0.5s mean delay and 0.5 failure rate.")
     print("\t-u  <monitor_update_interval>: Set 'monitor_update_interval' to floating point number greater than 0.5")
-    exit(code)
+    sys.exit(code)
 
 def adjust_senders(config: SimulatorConfig):
     if config.num_senders < len(config.sender_settings):
@@ -87,10 +86,9 @@ def set_config_from_file(config: SimulatorConfig, filepath: str):
 
     return config
 
-def process_arguments(args):
+def process_arguments(argv) -> SimulatorConfig:
     config = SimulatorConfig()
 
-    argv = list(args)[1:]
     used_options = []
     option = ""
     i = 0
@@ -109,7 +107,6 @@ def process_arguments(args):
             match option:
                 case "-h":
                     print_help_message()
-                    
                 case "-c":
                     filepath = argv[i]
                     if os.path.isfile(filepath):
@@ -179,7 +176,7 @@ def main(*args):
         print("No configuration options provided! Using default settings...")
         config = SimulatorConfig()
     else:
-        config = process_arguments(args)
+        config = process_arguments(list(args)[1:])
 
     config = adjust_senders(config)
 

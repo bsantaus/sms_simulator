@@ -16,3 +16,6 @@ test-backend:
 
 test-queue:
 	PYTHONPATH=src/:${PYTHONPATH} pytest test/msg_queue/
+
+test-sim:
+	PYTHONPATH=src/:${PYTHONPATH} pytest test/simulator/
