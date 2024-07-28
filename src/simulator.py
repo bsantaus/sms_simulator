@@ -4,6 +4,8 @@ import uvicorn
 import sys
 import os
 import time
+import json
+import signal
 from dataclasses import dataclass, field, asdict
 from typing import Optional, List
 
@@ -13,6 +15,12 @@ from msg_queue.msg_queue import MessageQueue
 from monitor.backend.main import app
 
 OPTIONS = ["-h", "-c", "-m", "-s", "-S", "-u"]
+monitor = None
+
+def finish_handler(signum, frame):
+    print("\nExiting...")
+    monitor.kill()
+    monitor.join()
 
 @dataclass
 class SenderSettings:
@@ -28,7 +36,7 @@ class SimulatorConfig:
     monitor_url: Optional[str] = "http://localhost:8000" # potentially configurable in the future!
     monitor_update_interval: Optional[int] = 1
 
-def print_help_message():
+def print_help_message(code: Optional[int] = 0):
     print("SMS Simulator CLI")
     print("Usage: python simulator.py <OPTIONS>")
     print("")
@@ -49,7 +57,7 @@ def print_help_message():
     print("\t                                 Senders which are not explicitly provided configuration values will use default")
     print("\t                                 values of 0.5s mean delay and 0.5 failure rate.")
     print("\t-u  <monitor_update_interval>: Set 'monitor_update_interval' to floating point number greater than 0.5")
-
+    exit(code)
 
 def adjust_senders(config: SimulatorConfig):
     if config.num_senders < len(config.sender_settings):
@@ -58,6 +66,25 @@ def adjust_senders(config: SimulatorConfig):
         gap = config.num_senders - len(config.sender_settings)
         for _ in range(gap):
             config.sender_settings.append(SenderSettings())
+    return config
+
+def set_config_from_file(config: SimulatorConfig, filepath: str):
+    with open(filepath, "r") as cfgfile:
+        config_dict = json.load(cfgfile)
+
+    for key in config_dict:
+        match key:
+            case "num_messages":
+                config.num_messages = int(config_dict[key])
+            case "num_senders":
+                config.num_senders = int(config_dict[key])
+            case "monitor_update_interval":
+                config.monitor_update_interval = float(config_dict[key])
+            case "sender_settings":
+                config.sender_settings = [SenderSettings(**obj) for obj in config_dict[key]]
+            case _:
+                print(f"Unrecognized key in config: {key}! Ignoring...")
+
     return config
 
 def process_arguments(args):
@@ -82,10 +109,13 @@ def process_arguments(args):
             match option:
                 case "-h":
                     print_help_message()
-                    exit(0)
+                    
                 case "-c":
                     filepath = argv[i]
-                    print("not implemented yet!")
+                    if os.path.isfile(filepath):
+                        config = set_config_from_file(config, filepath)
+                    else:
+                        raise ValueError(f"File '{filepath}' does not exist!")
                 case "-m":
                     config.num_messages = int(argv[i])
                 case "-S": 
@@ -101,12 +131,13 @@ def process_arguments(args):
 
         except SyntaxError as e:
             print(f"Error while setting configuration values! {e}\n")
-            print_help_message()
-            exit(1)
+            print_help_message(code=1)
         except ValueError as e:
             print(f"Error while setting configuration values! {e}")
-            print_help_message()
-            exit(1)
+            print_help_message(code=1)
+        except json.decoder.JSONDecodeError as e:
+            print("Error retrieving configuration values from file! {e}")
+            print_help_message(code=1)
 
     return config
 
@@ -142,6 +173,7 @@ def launch_simulation(
     return senders, sender_threads, generator_thread
 
 def main(*args):
+    global monitor
 
     if len(args) == 1:
         print("No configuration options provided! Using default settings...")
@@ -155,6 +187,7 @@ def main(*args):
 
     monitor = launch_monitor(config)
 
+
     print("Simulation Progress Monitor is viewable at http://localhost:8000 !")
     print("Launching simulation... \n")
 
@@ -165,7 +198,7 @@ def main(*args):
     print("Simulation started! Waiting for all messages to be consumed...")
 
     while message_queue.length() > 0:
-        time.sleep(2)
+        time.sleep(0.5)
     
     for sender in senders:
         sender.finish_consuming = True
@@ -176,6 +209,7 @@ def main(*args):
     generator_thread.join()
 
     print("All messages have been consumed! You can browse the monitor for as long as you please, then use Ctrl+C to finish.")
+    signal.signal(signal.SIGINT, finish_handler)
 
 if __name__ == "__main__":
     main(*sys.argv)

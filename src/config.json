@@ -1,0 +1,11 @@
+{
+    "num_messages": 2,
+    "num_senders": 1,
+    "sender_settings": [
+        {
+            "mean_delay": 0.5,
+            "fail_rate": 0.1
+        }
+    ],
+    "monitor_update_interval": 1.12
+}
