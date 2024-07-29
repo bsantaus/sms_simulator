@@ -47,7 +47,7 @@ The default configuration of the simulator is as follows:
     Monitor update interval: 1s
 ```
 
-Generally, running the simulator can be done `python src/simulator.py <OPTIONS>`. 
+Generally, running the simulator can be done using `python src/simulator.py <OPTIONS>`. 
 
 You can get detailed information on the options available using `python src/simulator.py -h`.
 
@@ -61,7 +61,10 @@ Note that any command-line arguments passed _before_ the config file argument wi
 
 ## Viewing the Progress Monitor
 
-The Progress Monitor component has two sub-components: a frontend application written in Svelte with Tailwind for styling and a backend API written using FastAPI.
+The Progress Monitor component has two sub-components: a frontend application written in [Svelte](https://kit.svelte.dev/) with [Tailwind](https://tailwindcss.com/) for styling and a backend API written using FastAPI.
+
+On the Progress Monitor, you can view the current totals for the number of sent messages, the number of failed messages, and the average delay per message (sent or failed).
+These statistics will update according to the configured interval.
 
 The frontend application for the Monitor is served at [http://localhost:3000/](http://localhost:3000/) while the simulator is running.
 If you would like to see it on its own, you can run `npm run dev` from the [src/monitor/frontend](src/monitor/frontend/) directory.

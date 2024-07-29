@@ -13,8 +13,8 @@ class MessageResultRequest(SQLModel):
     delay: float
 
 class MessageStatistics(SQLModel):
-    total_messages: int
     success_messages: int
+    failed_messages: int
     average_delay: float
 
 class ErrorResponse(SQLModel):

@@ -29,8 +29,8 @@ app.add_middleware(
 stat_lock = Lock()
 
 message_statistics = MessageStatistics(
-    total_messages=0,
     success_messages=0,
+    failed_messages=0,
     average_delay=0.0
 )
 
@@ -72,8 +72,9 @@ def report_message_result(message_result: MessageResultRequest):
 
     with stat_lock:
         message_statistics.success_messages += 1 if message_result.success else 0
-        message_statistics.average_delay = round((message_statistics.average_delay * message_statistics.total_messages + message_result.delay) / (message_statistics.total_messages + 1), 4)
-        message_statistics.total_messages += 1
+        message_statistics.failed_messages += 0 if message_result.success else 1
+        total_messages = message_statistics.success_messages + message_statistics.failed_messages
+        message_statistics.average_delay = round((message_statistics.average_delay * (total_messages - 1) + message_result.delay) / (total_messages), 4)
 
     return "OK"
 
@@ -90,8 +91,8 @@ def reset_statistics():
         Used for testing - reset statistics to 0s
     '''
     with stat_lock:
-        message_statistics.total_messages = 0
         message_statistics.success_messages = 0
+        message_statistics.failed_messages = 0
         message_statistics.average_delay = 0.0
 
     return "OK"

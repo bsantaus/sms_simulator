@@ -129,7 +129,7 @@ def test_consume_messages():
     print(sdr.report_result.call_count)
 
     results = sdr.report_result.call_args_list
-    successes = sum([1 if r[0][0] == True else 0 for r in results])
+    successes = sum([1 if r[0][1] == True else 0 for r in results])
 
     assert successes >= expected_successes_low
     assert successes <= expected_successes_high

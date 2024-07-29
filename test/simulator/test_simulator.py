@@ -163,26 +163,29 @@ def test_process_arguments():
 
 def test_launch_monitor():
     import multiprocessing
+    import subprocess
     import httpx
 
-    monitor_proc = launch_monitor(SimulatorConfig())
+    api_proc, monitor_proc = launch_monitor(SimulatorConfig())
     time.sleep(0.2)
     passed = False
 
     try:
-        assert type(monitor_proc) == multiprocessing.Process
-        assert monitor_proc.is_alive()
+        assert type(api_proc) == multiprocessing.Process
+        assert type(monitor_proc) == subprocess.Popen
+        assert api_proc.is_alive()
 
         interval_res = httpx.get("http://localhost:8000/interval")
         
         assert interval_res.status_code == 200
-        assert json.loads(interval_res.content)["interval"] == 10
+        assert json.loads(interval_res.content)["interval"] == 1
 
         passed = True
     except AssertionError as e:
         err = e
     finally:
         monitor_proc.kill()
+        api_proc.kill()
         if not passed:
             raise err
         

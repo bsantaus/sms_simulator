@@ -59,7 +59,7 @@ def test_retrieve_statistics(client):
     
     initial_stats = json.loads(res.content)
 
-    assert initial_stats["total_messages"] == 0
+    assert initial_stats["failed_messages"] == 0
     assert initial_stats["success_messages"] == 0
     assert initial_stats["average_delay"] == 0
 
@@ -68,18 +68,22 @@ def test_retrieve_statistics(client):
     expected_stats = [
         {
             "success_messages": 1,
+            "failed_messages": 0,
             "average_delay": 0.5
         },
         {
             "success_messages": 2,
+            "failed_messages": 0,
             "average_delay": 0.85
         },
         {
             "success_messages": 2,
+            "failed_messages": 1,
             "average_delay": 0.7
         },
         {
             "success_messages": 2,
+            "failed_messages": 2,
             "average_delay": 0.8
         },
     ]
@@ -101,8 +105,8 @@ def test_retrieve_statistics(client):
 
         stats = json.loads(stats_res.content)
 
-        assert stats["total_messages"] == idx + 1
         assert stats["success_messages"] == expected_stats[idx]["success_messages"]
+        assert stats["failed_messages"] == expected_stats[idx]["failed_messages"]
         assert round(stats["average_delay"], 5) == round(expected_stats[idx]["average_delay"], 5)
 
 

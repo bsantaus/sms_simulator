@@ -2,7 +2,7 @@
     import { onMount } from "svelte";
 
     let interval = 0;
-    let total_messages = 0;
+    let failed_messages = 0;
     let success_messages = 0;
     let average_delay = 0.0;
     
@@ -18,16 +18,10 @@
         setInterval(async () => {
             let stat_res = await fetch("http://localhost:8000/statistics");
             let stat_obj = await stat_res.json();
-            console.log(stat_obj);
 
-
-            total_messages = stat_obj.total_messages;
+            failed_messages = stat_obj.failed_messages;
             success_messages = stat_obj.success_messages;
             average_delay = stat_obj.average_delay;
-
-            console.log(success_messages)
-            console.log(total_messages)
-            console.log(average_delay)
         }, interval * 1000)
     });
 </script>
@@ -37,12 +31,12 @@
 </div>
 <div class="grid grid-cols-3 justify-items-center">
     <div class="text-center ml-10 mb-10 min-w-[300px] max-w-[400px] min-h-[120px] border-black border-4 bg-blue-200">
-        <h2 class="text-2xl font-bold">Total Messages</h2>
-        <h2 class="text-6xl font-bold">{total_messages}</h2>
+        <h2 class="text-2xl font-bold">Sent Messages</h2>
+        <h2 class="text-6xl font-bold">{success_messages}</h2>
     </div>
     <div class="text-center ml-10 mb-10 min-w-[300px] max-w-[400px] min-h-[120px] border-black border-4 bg-blue-200">
-        <h2 class="text-2xl font-bold">Successful Messages</h2>
-        <h2 class="text-6xl font-bold">{success_messages}</h2>
+        <h2 class="text-2xl font-bold">Failed Messages</h2>
+        <h2 class="text-6xl font-bold">{failed_messages}</h2>
     </div>
     <div class="text-center ml-10 mb-10 min-w-[300px] max-w-[400px] min-h-[120px] border-black border-4 bg-blue-200">
         <h2 class="text-2xl font-bold">Average Delay</h2>
