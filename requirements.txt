@@ -1,5 +1,4 @@
 fastapi
 httpx
-pika
 pytest
 sqlmodel

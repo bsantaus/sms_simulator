@@ -36,6 +36,9 @@ message_statistics = MessageStatistics(
 
 @app.get("/")
 def server_check():
+    '''
+        Return a healthcheck to confirm API is available
+    '''
     return JSONResponse(
         content={
             "timestamp": time.time(),
@@ -45,12 +48,21 @@ def server_check():
 
 @app.get("/interval")
 def get_interval():
+    '''
+        For Monitor frontend, return interval at which the 
+        Monitor should poll for updates.
+    '''
     return {
         "interval": float(os.getenv("SMS_UPDATE_INTERVAL", 1))
     }
 
 @app.post("/message", response_model=None, responses={"400": {"model": ErrorResponse}})
 def report_message_result(message_result: MessageResultRequest):
+    '''
+        Receive report of a Message processing from a Sender
+
+        Update collected statistics in-memory.
+    '''
     
     # The API isn't running multiple workers - it's not
     # necessary quite yet, so this lock is mainly
@@ -67,10 +79,16 @@ def report_message_result(message_result: MessageResultRequest):
 
 @app.get("/statistics", response_model=MessageStatistics)
 def retrieve_statistics():
+    '''
+        Return collected statistics to Monitor frontend
+    '''
     return message_statistics
 
 @app.post("/reset", response_model=None)
 def reset_statistics():
+    '''
+        Used for testing - reset statistics to 0s
+    '''
     with stat_lock:
         message_statistics.total_messages = 0
         message_statistics.success_messages = 0

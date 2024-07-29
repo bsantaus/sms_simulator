@@ -19,12 +19,16 @@ OPTIONS = ["-h", "-c", "-m", "-s", "-S", "-u"]
 monitor = None
 api = None
 
+# Signal handler for the end of the simulation
+# Cleanly kill processes rather than let the 
+# user hit Ctrl-C five times to kill everything.
 def finish_handler(signum, frame):
     print("\nExiting...")
     monitor.kill()
     api.kill()
     api.join()
 
+# --- Config Classes ---
 @dataclass
 class SenderSettings:
     mean_delay: Optional[float] = 0.5
@@ -38,7 +42,13 @@ class SimulatorConfig:
     monitor_url: Optional[str] = "http://localhost:8000" # potentially configurable in the future!
     monitor_update_interval: Optional[int] = 1
 
+# --- Helper functions for Simulation Main ---
+
 def print_help_message(code: Optional[int] = 0):
+    '''
+        Print message on Simulator usage and options.
+    '''
+
     print("SMS Simulator CLI")
     print("Usage: python simulator.py <OPTIONS>")
     print("")
@@ -62,6 +72,10 @@ def print_help_message(code: Optional[int] = 0):
     sys.exit(code)
 
 def adjust_senders(config: SimulatorConfig):
+    '''
+        Adjust either num_senders or sender_settings
+        to accommodate the 'larger' of the two
+    '''
     if config.num_senders < len(config.sender_settings):
         config.num_senders = len(config.sender_settings)
     else:
@@ -71,6 +85,10 @@ def adjust_senders(config: SimulatorConfig):
     return config
 
 def set_config_from_file(config: SimulatorConfig, filepath: str):
+    '''
+        Load in configuration values from json file
+    '''
+
     with open(filepath, "r") as cfgfile:
         config_dict = json.load(cfgfile)
 
@@ -90,6 +108,10 @@ def set_config_from_file(config: SimulatorConfig, filepath: str):
     return config
 
 def process_arguments(argv) -> SimulatorConfig:
+    '''
+        Handle command-line arguments to set config
+    '''
+
     config = SimulatorConfig()
 
     used_options = []
@@ -142,6 +164,11 @@ def process_arguments(argv) -> SimulatorConfig:
     return config
 
 def launch_monitor(config: SimulatorConfig) -> tuple[Process, subprocess.Popen]:
+    '''
+        Launch both front and backend for Monitor component 
+        in separate processes
+    '''
+    
     os.environ["SMS_UPDATE_INTERVAL"] = str(config.monitor_update_interval)
     api_proc = Process(target=uvicorn.run, args=(app,), kwargs={
         "host": "0.0.0.0",
@@ -159,6 +186,12 @@ def launch_simulation(
         config: SimulatorConfig, 
         queue: MessageQueue
 ) -> tuple[list[Sender], list[threading.Thread], threading.Thread]:
+    '''
+        Launch Generator and requested Senders in their own
+        threads to start simulation. All threads reference the 
+        same message queue.
+    '''
+
     senders = []
     sender_threads = []
 
@@ -177,6 +210,12 @@ def launch_simulation(
     return senders, sender_threads, generator_thread
 
 def main(*args):
+    '''
+        Main function for Simulator.
+        Process command-line arguments then launch all components.
+        Set up signal handler at end for easy exit.
+    '''
+
     global monitor, api
 
     if len(args) == 1:
