@@ -1,5 +1,6 @@
 import threading
 from multiprocessing import Process
+import subprocess
 import uvicorn
 import sys
 import os
@@ -16,11 +17,13 @@ from monitor.backend.main import app
 
 OPTIONS = ["-h", "-c", "-m", "-s", "-S", "-u"]
 monitor = None
+api = None
 
 def finish_handler(signum, frame):
     print("\nExiting...")
     monitor.kill()
-    monitor.join()
+    api.kill()
+    api.join()
 
 @dataclass
 class SenderSettings:
@@ -138,15 +141,19 @@ def process_arguments(argv) -> SimulatorConfig:
 
     return config
 
-def launch_monitor(config: SimulatorConfig):
+def launch_monitor(config: SimulatorConfig) -> tuple[Process, subprocess.Popen]:
     os.environ["SMS_UPDATE_INTERVAL"] = str(config.monitor_update_interval)
-    monitor_proc = Process(target=uvicorn.run, args=(app,), kwargs={
+    api_proc = Process(target=uvicorn.run, args=(app,), kwargs={
         "host": "0.0.0.0",
         "port": 8000,
         "log_level": "error"
     })
-    monitor_proc.start()
-    return monitor_proc
+    api_proc.start()
+
+    monitor_dir = str(os.path.dirname(os.path.abspath(__file__))) + "/monitor/frontend"
+    monitor_proc = subprocess.Popen(["node", "build"], cwd=monitor_dir)
+
+    return api_proc, monitor_proc
 
 def launch_simulation(
         config: SimulatorConfig, 
@@ -170,7 +177,7 @@ def launch_simulation(
     return senders, sender_threads, generator_thread
 
 def main(*args):
-    global monitor
+    global monitor, api
 
     if len(args) == 1:
         print("No configuration options provided! Using default settings...")
@@ -182,10 +189,9 @@ def main(*args):
 
     print("Configuration loaded, launching monitor...\n")
 
-    monitor = launch_monitor(config)
+    api, monitor = launch_monitor(config)
 
-
-    print("Simulation Progress Monitor is viewable at http://localhost:8000 !")
+    print("Simulation Progress Monitor is viewable at http://localhost:3000 !")
     print("Launching simulation... \n")
 
     message_queue = MessageQueue()

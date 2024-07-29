@@ -25,7 +25,7 @@ class MonitorService():
                         self.url = url
                         return
                 except Exception as e:
-                    time.sleep(2)
+                    time.sleep(1)
             raise Exception("Monitor API not available!")
         else:
             self.url = None    

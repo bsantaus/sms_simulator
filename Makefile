@@ -2,6 +2,9 @@ install:
 	pip install -r requirements.txt
 	cd src/monitor/frontend && npm install && cd ../../..
 
+build-frontend:
+	cd src/monitor/frontend && npm run build
+
 test-all: 
 	PYTHONPATH=src/:${PYTHONPATH} pytest test
 

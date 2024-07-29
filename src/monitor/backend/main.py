@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
 import time
 import os
 from threading import Lock
@@ -10,6 +11,19 @@ app = FastAPI(
     title='SMS Simulator Statistics Collector',
     description='Simple API providing an endpoint for reporting results and one for retrieving statistics',
     version='0.0.0'
+)
+
+origins = [
+    "http://localhost",
+    "http://localhost:8000",
+    "http://localhost:3000"
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_methods=["*"],
+    allow_headers=["*"]
 )
 
 stat_lock = Lock()
@@ -46,7 +60,7 @@ def report_message_result(message_result: MessageResultRequest):
 
     with stat_lock:
         message_statistics.success_messages += 1 if message_result.success else 0
-        message_statistics.average_delay = (message_statistics.average_delay * message_statistics.total_messages + message_result.delay) / (message_statistics.total_messages + 1)
+        message_statistics.average_delay = round((message_statistics.average_delay * message_statistics.total_messages + message_result.delay) / (message_statistics.total_messages + 1), 4)
         message_statistics.total_messages += 1
 
     return "OK"
